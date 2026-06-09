@@ -9,12 +9,12 @@ export async function POST(request: Request) {
   try {
     const { username, email, password } = await request.json();
 
-    const existingUserVerifiedByUsername = await userModel.findOne({
+    const existingUsername = await userModel.findOne({
       username,
       isVerified: true,
     });
 
-    if (existingUserVerifiedByUsername) {
+    if (existingUsername) {
       return Response.json(
         {
           success: false,
@@ -26,12 +26,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const existingUserbyEmail = await userModel.findOne({ email });
+    const existingEmail = await userModel.findOne({ email });
 
     const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-    if (existingUserbyEmail) {
-      if (existingUserbyEmail.isVerified) {
+    if (existingEmail) {
+      if (existingEmail.isVerified) {
         return Response.json(
           {
             success: true,
@@ -44,11 +44,11 @@ export async function POST(request: Request) {
       } else {
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        existingUserbyEmail.password = hashedPassword;
-        existingUserbyEmail.verifyCode = verifyCode;
-        existingUserbyEmail.verifyCodeExpiry = new Date(Date.now() + 3600000);
+        existingEmail.password = hashedPassword;
+        existingEmail.verifyCode = verifyCode;
+        existingEmail.verifyCodeExpiry = new Date(Date.now() + 3600000);
 
-        await existingUserbyEmail.save();
+        await existingEmail.save();
       }
     } else {
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -70,30 +70,31 @@ export async function POST(request: Request) {
       await newUser.save();
     }
 
-    // send verification email
+    // send otp to email
 
     const emailResponse = await sendVerificationEmail(
       email,
       username,
       verifyCode,
     );
-
+    // if otp not sent to email than give error
     if (!emailResponse.success) {
       return Response.json(
         {
           success: false,
-          message: emailResponse,
+          message: emailResponse.message,
         },
         {
           status: 500,
         },
       );
     }
-
+    // if otp sent successfully than register user successfully into db
     return Response.json(
       {
         success: true,
-        message: "User registered successfully. Please verify your email",
+        message:
+          "Registration successful.Please check your email to verify your account.",
       },
       {
         status: 201,
