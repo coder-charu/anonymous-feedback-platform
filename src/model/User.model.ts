@@ -26,7 +26,7 @@ export interface User extends Document {
   verifyCodeExpiry: Date;
   isVerified: boolean;
   isAcceptingMessage: boolean;
-  message: Message[];
+  messages: Message[];
 }
 // we make user schema using mongoose
 const userSchema: Schema<User> = new Schema({
@@ -62,7 +62,7 @@ const userSchema: Schema<User> = new Schema({
     type: Boolean,
     default: true,
   },
-  message: [messageSchema],
+  messages: [messageSchema],
 });
 
 // we make user model but add 2 Cases. 1st is give user if it is already in database or 2nd case is create user in database
