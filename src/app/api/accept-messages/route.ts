@@ -8,33 +8,33 @@ export async function POST(request: Request) {
   await dbConnect();
 
   const session = await getServerSession(authOptions);
-  const user: User = session?.user as User;
+  const loggedInUser: User = session?.user as User;
 
-  if (!session || !user) {
+  if (!session || !loggedInUser) {
     return Response.json(
       {
         success: false,
-        message: "Not Authenticated",
+        message: "Please log in to continue",
       },
       { status: 401 },
     );
   }
 
-  const userId = user._id;
-  const { acceptMessages } = await request.json();
+  const loggedInUserId = loggedInUser._id;
+  const { shouldAcceptMessages } = await request.json();
 
   try {
-    const updateUser = await userModel.findByIdAndUpdate(
-      userId,
-      { isAcceptingMessage: acceptMessages },
+    const updatedUser = await userModel.findByIdAndUpdate(
+      loggedInUserId,
+      { isAcceptingMessage: shouldAcceptMessages },
       { new: true },
     );
 
-    if (!updateUser) {
+    if (!updatedUser) {
       return Response.json(
         {
           success: false,
-          message: "Failed to update user status to accept messages",
+          message: "Unable to update message acceptance setting",
         },
         { status: 401 },
       );
@@ -43,18 +43,18 @@ export async function POST(request: Request) {
     return Response.json(
       {
         success: true,
-        message: "Message acceptance status updated successfully",
-        updateUser,
+        message: "Message settings updated successfully",
+        updatedUser,
       },
       { status: 200 },
     );
   } catch (error) {
-    console.log("error in accept-messages api as Post :", error);
+    console.log("Error updating message settings:", error);
 
     return Response.json(
       {
         success: false,
-        message: "Internal Server Error",
+        message: "Something went wrong while updating message settings",
       },
       { status: 500 },
     );
@@ -65,28 +65,28 @@ export async function GET(request: Request) {
   await dbConnect();
 
   const session = await getServerSession(authOptions);
-  const user: User = session?.user as User;
+  const loggedInUser: User = session?.user as User;
 
-  if (!session || !user) {
+  if (!session || !loggedInUser) {
     return Response.json(
       {
         success: false,
-        message: "Not Authenticated",
+        message: "Please log in to continue",
       },
       { status: 401 },
     );
   }
 
-  const userId = user._id;
+  const loggedInUserId = loggedInUser._id;
 
   try {
-    const foundUser = await userModel.findById(userId);
+    const currentUser = await userModel.findById(loggedInUserId);
 
-    if (!foundUser) {
+    if (!currentUser) {
       return Response.json(
         {
           success: false,
-          message: "User not found",
+          message: "Account not found",
         },
         { status: 404 },
       );
@@ -95,17 +95,17 @@ export async function GET(request: Request) {
     return Response.json(
       {
         success: true,
-        isAcceptingMessages: foundUser.isAcceptingMessage,
+        isAcceptingMessages: currentUser.isAcceptingMessage,
       },
       { status: 200 },
     );
   } catch (error) {
-    console.log("error in accept-messages api as Get:", error);
+    console.log("Error fetching message acceptance status:", error);
 
     return Response.json(
       {
         success: false,
-        message: "Internal Server Error",
+        message: "Unable to fetch message settings",
       },
       { status: 500 },
     );
