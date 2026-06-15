@@ -191,7 +191,7 @@ const signUppage = () => {
 
           <Button
             type="submit"
-            className="w-full bg-purple-950"
+            className="w-full bg-purple-950 hover:bg-purple-700"
             disabled={isSubmitting}
           >
             {isSubmitting ?
